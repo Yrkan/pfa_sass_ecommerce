@@ -221,3 +221,32 @@ func UpdateUser(c *fiber.Ctx) error {
 	})
 
 }
+
+func DeleteUser(c *fiber.Ctx) error {
+	usersCollection := config.MI.DB.Collection("users")
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	userId, err := primitive.ObjectIDFromHex(c.Params("userId"))
+	if err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"success": false,
+			"message": "User not found",
+			"error":   err,
+		})
+	}
+
+	_, err = usersCollection.DeleteOne(ctx, bson.M{"_id": userId})
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"success": false,
+			"message": "Failed to delete user",
+			"error":   err,
+		})
+	}
+
+	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
+		"success": true,
+		"message": "User deleted successfully",
+	})
+}
