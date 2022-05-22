@@ -157,6 +157,17 @@ func CreateUser(c *fiber.Ctx) error {
 		})
 	}
 
+	// Hash password
+	hashed, err := utils.HashPassword(user.Password)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"success": false,
+			"message": "Failed to create user",
+			"error":   err,
+		})
+	}
+	user.Password = hashed
+
 	// Attempt insert
 	result, err := usersCollection.InsertOne(ctx, user)
 	if err != nil {
@@ -249,4 +260,5 @@ func DeleteUser(c *fiber.Ctx) error {
 		"success": true,
 		"message": "User deleted successfully",
 	})
+
 }
