@@ -5,16 +5,25 @@ go 1.18
 require github.com/gofiber/fiber/v2 v2.32.0
 
 require (
+	github.com/dgrijalva/jwt-go v3.2.0+incompatible // indirect
 	github.com/go-playground/locales v0.14.0 // indirect
 	github.com/go-playground/universal-translator v0.18.0 // indirect
+	github.com/gofiber/fiber v1.13.3 // indirect
+	github.com/gofiber/utils v0.0.9 // indirect
+	github.com/golang-jwt/jwt/v4 v4.0.0 // indirect
+	github.com/gorilla/schema v1.1.0 // indirect
 	github.com/leodido/go-urn v1.2.1 // indirect
+	github.com/mattn/go-colorable v0.1.7 // indirect
+	github.com/mattn/go-isatty v0.0.12 // indirect
 )
 
 require (
 	github.com/andybalholm/brotli v1.0.4 // indirect
 	github.com/go-playground/validator/v10 v10.10.1
 	github.com/go-stack/stack v1.8.0 // indirect
-	github.com/golang/snappy v0.0.1 // indirect
+	github.com/gofiber/jwt v0.2.0
+	github.com/gofiber/jwt/v2 v2.2.7
+	github.com/golang/snappy v0.0.3 // indirect
 	github.com/joho/godotenv v1.4.0 // indirect
 	github.com/klauspost/compress v1.15.0 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
