@@ -23,6 +23,7 @@ func setupRoutes(app *fiber.App) {
 	api := app.Group("/api")
 
 	routes.UsersRoute(api.Group("/users"))
+	routes.AuthRoutes(api.Group("/auth"))
 }
 func main() {
 	if os.Getenv("APP_ENV") != "production" {
@@ -33,7 +34,7 @@ func main() {
 	}
 
 	app := fiber.New(fiber.Config{
-		Prefork: true,
+		Prefork: false,
 	})
 
 	app.Use(cors.New())
