@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/golang-jwt/jwt/v4"
 	"github.com/yrkan/pfa_sass_ecommerce/backend/config"
 	"github.com/yrkan/pfa_sass_ecommerce/backend/models"
 	"github.com/yrkan/pfa_sass_ecommerce/backend/utils"
@@ -18,6 +19,24 @@ import (
 )
 
 func GetAllUsers(c *fiber.Ctx) error {
+
+	// Check authorization
+	authorized := false
+	claims := c.Locals("user").(*jwt.Token).Claims.(jwt.MapClaims)
+	tokenAdminId := claims["admin_id"]
+
+	if tokenAdminId != nil {
+		authorized = true
+	}
+
+	if !authorized {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"success": false,
+			"message": "Unauthorized",
+		})
+	}
+
+	// Authorized
 	usersCollection := config.MI.DB.Collection("users")
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
@@ -90,13 +109,29 @@ func GetAllUsers(c *fiber.Ctx) error {
 }
 
 func GetSingleUser(c *fiber.Ctx) error {
-	usersCollection := config.MI.DB.Collection("users")
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
 
-	var user models.User
-
+	// Check authorization
+	authorized := false
+	claims := c.Locals("user").(*jwt.Token).Claims.(jwt.MapClaims)
 	userId, err := primitive.ObjectIDFromHex(c.Params("userId"))
+	tokenUserId := claims["user_id"]
+	tokenAdminId := claims["admin_id"]
+
+	if tokenAdminId != nil {
+		authorized = true
+	} else if tokenUserId != nil {
+		if tokenUserId == c.Params("userId") {
+			authorized = true
+		}
+	}
+
+	if !authorized {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"success": false,
+			"message": "Unauthorized",
+		})
+	}
+
 	// Bad request
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
@@ -105,6 +140,12 @@ func GetSingleUser(c *fiber.Ctx) error {
 			"error":   err,
 		})
 	}
+
+	usersCollection := config.MI.DB.Collection("users")
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	var user models.User
 
 	// Not Found
 	findResult := usersCollection.FindOne(ctx, bson.M{"_id": userId})
@@ -133,6 +174,22 @@ func GetSingleUser(c *fiber.Ctx) error {
 }
 
 func CreateUser(c *fiber.Ctx) error {
+	// Check authorization
+	authorized := false
+	claims := c.Locals("user").(*jwt.Token).Claims.(jwt.MapClaims)
+	tokenAdminId := claims["admin_id"]
+
+	if tokenAdminId != nil {
+		authorized = true
+	}
+
+	if !authorized {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"success": false,
+			"message": "Unauthorized",
+		})
+	}
+
 	usersCollection := config.MI.DB.Collection("users")
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
