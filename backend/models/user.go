@@ -8,5 +8,5 @@ type User struct {
 	Password string               `json:"password,omitempty" bson:"password,omitempty" validate:"required"`
 	Email    string               `json:"email,omitempty" bson:"email,omitempty" validate:"required"`
 	FullName string               `json:"full_name,omitempty" bson:"full_name,omitempty" validate:"required"`
-	Stores   []primitive.ObjectID `json:"stores,omitempty" bson:"stores,omitempty" validate:"required"`
+	Stores   []primitive.ObjectID `json:"stores,omitempty" bson:"stores,omitempty"`
 }
