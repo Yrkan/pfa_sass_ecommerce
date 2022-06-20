@@ -19,7 +19,7 @@ import (
 )
 
 // If there's no admin (first setup) ask for an admin
-func setupAdmin() {
+func setupAdminIfNotExist() {
 	// Check if there is already an admin
 	adminsCollection := config.MI.DB.Collection("admins")
 	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Second)
@@ -60,6 +60,7 @@ func setupAdmin() {
 
 			// Success
 			fmt.Println("Admin created with success")
+			fmt.Println(result.InsertedID)
 
 		} else {
 			fmt.Println("there's nothing to do")
@@ -87,7 +88,7 @@ func setupRoutes(app *fiber.App) {
 func main() {
 	config.ConnectDB()
 
-	setupAdmin()
+	setupAdminIfNotExist()
 
 	if os.Getenv("APP_ENV") != "production" {
 		err := godotenv.Load()
