@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"context"
+	"log"
 	"os"
 	"time"
 
@@ -82,5 +83,68 @@ func Login(c *fiber.Ctx) error {
 		"success": true,
 		"message": "Success login",
 		"data":    signedToken,
+	})
+}
+
+func Register(c *fiber.Ctx) error {
+	usersCollection := config.MI.DB.Collection("users")
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+	defer cancel()
+	user := new(models.User)
+
+	// Bad request
+	if err := c.BodyParser(user); err != nil {
+		log.Println(err)
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"sucess":  false,
+			"message": "Failed to parse the request body",
+			"error":   err,
+		})
+	}
+
+	// Validation
+	validate := utils.NewValidator()
+	if err := validate.Struct(user); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"success": false,
+			"message": utils.ValidationErrors(err),
+		})
+	}
+
+	// Hash password
+	hashed, err := utils.HashPassword(user.Password)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"success": false,
+			"message": "Failed to create user",
+			"error":   err,
+		})
+	}
+	user.Password = hashed
+
+	// Check user exists
+	exists, _ := getUserByUsername(user.Username)
+	if exists != nil {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"success": false,
+			"message": "Username already in use",
+		})
+	}
+
+	// Attempt insert
+	result, err := usersCollection.InsertOne(ctx, user)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"success": false,
+			"message": "Failed to create user",
+			"error":   err,
+		})
+	}
+
+	// Success
+	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
+		"success": true,
+		"data":    result,
+		"message": "User created successfully",
 	})
 }
