@@ -28,7 +28,22 @@ func getUserByUsername(username string) (*models.User, error) {
 	}
 
 	return &user, err
+}
 
+func getAdminByUsername(username string) (*models.Admin, error) {
+	adminsCollection := config.MI.DB.Collection("admins")
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	var admin models.Admin
+
+	findResult := adminsCollection.FindOne(ctx, bson.M{"username": username})
+	err := findResult.Decode(&admin)
+	if err != nil {
+		return nil, err
+	}
+
+	return &admin, err
 }
 
 func Login(c *fiber.Ctx) error {
@@ -67,6 +82,7 @@ func Login(c *fiber.Ctx) error {
 		})
 	}
 
+	// Sign and send token
 	token := jwt.New(jwt.SigningMethodHS256)
 
 	claims := token.Claims.(jwt.MapClaims)
@@ -146,5 +162,61 @@ func Register(c *fiber.Ctx) error {
 		"success": true,
 		"data":    result,
 		"message": "User created successfully",
+	})
+}
+
+func LoginAdmin(c *fiber.Ctx) error {
+	type LoginInput struct {
+		Username string `json:"username"`
+		Password string `json:"password"`
+	}
+
+	var input LoginInput
+	var admin *models.Admin
+
+	if err := c.BodyParser(&input); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"success": false,
+			"message": "Invalid request",
+		})
+	}
+
+	username := input.Username
+	pass := input.Password
+
+	// Check admin exists
+	admin, err := getAdminByUsername(username)
+	if err != nil {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"success": false,
+			"message": "Invalid username or password",
+		})
+	}
+
+	// Validate password correct
+	if !utils.CheckPasswordHash(pass, admin.Password) {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"success": false,
+			"message": "Invalid username or password",
+		})
+	}
+
+	// Sign and send token
+	token := jwt.New(jwt.SigningMethodHS256)
+
+	claims := token.Claims.(jwt.MapClaims)
+	claims["admin_id"] = admin.ID
+	claims["username"] = admin.Username
+	claims["exp"] = time.Now().Add(time.Hour * 72).Unix()
+
+	signedToken, err := token.SignedString([]byte(os.Getenv("JWT_SECRET")))
+	if err != nil {
+		return c.SendStatus(fiber.StatusInternalServerError)
+	}
+
+	return c.JSON(fiber.Map{
+		"success": true,
+		"message": "Success login",
+		"data":    signedToken,
 	})
 }
