@@ -109,7 +109,6 @@ func GetAllUsers(c *fiber.Ctx) error {
 }
 
 func GetSingleUser(c *fiber.Ctx) error {
-
 	// Check authorization
 	authorized := false
 	claims := c.Locals("user").(*jwt.Token).Claims.(jwt.MapClaims)
@@ -245,6 +244,27 @@ func CreateUser(c *fiber.Ctx) error {
 }
 
 func UpdateUser(c *fiber.Ctx) error {
+	// Check authorization
+	authorized := false
+	claims := c.Locals("user").(*jwt.Token).Claims.(jwt.MapClaims)
+	tokenUserId := claims["user_id"]
+	tokenAdminId := claims["admin_id"]
+
+	if tokenAdminId != nil {
+		authorized = true
+	} else if tokenUserId != nil {
+		if tokenUserId == c.Params("userId") {
+			authorized = true
+		}
+	}
+
+	if !authorized {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"success": false,
+			"message": "Unauthorized",
+		})
+	}
+
 	usersCollection := config.MI.DB.Collection("users")
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
@@ -291,6 +311,28 @@ func UpdateUser(c *fiber.Ctx) error {
 }
 
 func DeleteUser(c *fiber.Ctx) error {
+	// Check authorization
+	authorized := false
+	claims := c.Locals("user").(*jwt.Token).Claims.(jwt.MapClaims)
+	tokenUserId := claims["user_id"]
+	tokenAdminId := claims["admin_id"]
+
+	if tokenAdminId != nil {
+		authorized = true
+	} else if tokenUserId != nil {
+		if tokenUserId == c.Params("userId") {
+			authorized = true
+		}
+	}
+
+	if !authorized {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"success": false,
+			"message": "Unauthorized",
+		})
+	}
+
+	// Authorized
 	usersCollection := config.MI.DB.Collection("users")
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
