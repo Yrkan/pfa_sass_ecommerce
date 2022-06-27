@@ -74,8 +74,6 @@ func GetAllUsers(c *fiber.Ctx) error {
 
 	// Find users
 	cursor, err := usersCollection.Find(ctx, filter, findOptions)
-
-	// Error Handeling
 	if err != nil {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
 			"success": false,
@@ -83,7 +81,6 @@ func GetAllUsers(c *fiber.Ctx) error {
 			"error":   err,
 		})
 	}
-
 	defer cursor.Close(ctx)
 
 	// Success
@@ -112,7 +109,6 @@ func GetSingleUser(c *fiber.Ctx) error {
 	// Check authorization
 	authorized := false
 	claims := c.Locals("user").(*jwt.Token).Claims.(jwt.MapClaims)
-	userId, err := primitive.ObjectIDFromHex(c.Params("userId"))
 	tokenUserId := claims["user_id"]
 	tokenAdminId := claims["admin_id"]
 
@@ -132,6 +128,7 @@ func GetSingleUser(c *fiber.Ctx) error {
 	}
 
 	// Bad request
+	userId, err := primitive.ObjectIDFromHex(c.Params("userId"))
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"success": false,
