@@ -83,6 +83,7 @@ func setupRoutes(app *fiber.App) {
 
 	routes.UsersRoute(api.Group("/users"))
 	routes.AuthRoutes(api.Group("/auth"))
+	routes.StoresRoutes(api.Group("/stores"))
 }
 
 func main() {
